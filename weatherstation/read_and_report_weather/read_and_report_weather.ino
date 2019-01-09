@@ -1,5 +1,5 @@
 #include "DHT.h"
-
+#include "stdio.h"
 #define DHTPIN D7     // what digital pin we're connected to
 
 //#define DHTTYPE DHT11   // DHT 11
@@ -16,8 +16,8 @@ const char* password = "internetplease";
 const char* host = "192.168.62.120";
 
 DHT dht(DHTPIN, DHTTYPE);
-
-
+WiFiClient client;
+const int httpPort = 10000;
 
 void connect_to_wifi() {
   WiFi.mode(WIFI_STA);
@@ -38,12 +38,16 @@ void connect_to_wifi() {
   Serial.println(host);
 
   // Use WiFiClient class to create TCP connections
+}
+void connect_to_server(){
   WiFiClient client;
   const int httpPort = 10000;
+  Serial.println("Trying to connect to server");
   if (!client.connect(host, httpPort)) {
     Serial.println("connection failed");
     return;
   }
+  client.println("S1");
   client.println("Send this data to server");
   
 }
@@ -94,5 +98,12 @@ void setup() {
 }
 
 void loop() {
+  if (WiFi.status() != WL_CONNECTED)
+  connect_to_wifi();
+
+  connect_to_server();
+
+  client.connect(host, httpPort);
   read_temp_and_humid();
+  delay(1000);
 }

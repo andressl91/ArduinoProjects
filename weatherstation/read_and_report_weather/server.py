@@ -1,3 +1,4 @@
+from typing import List
 import socket
 import time
 import logging
@@ -12,6 +13,7 @@ def get_white_list():
 
 
 class WeatherServer:
+    """Simple weatherserver for recieving weatherdata from Arduino"""
 
     def __init__(self, ip_address: str, port: int):
         self.ip_address = ip_address
@@ -35,16 +37,16 @@ class WeatherServer:
         self._logger.info(f"Incoming connection from {client_address}")
         return connection
 
-    def data_stream_stripper(self, data_stream: str):
+    def data_stream_stripper(self, data_stream: List):
         """Assumes ',' separated stream with type:value"""
         sensor_data = {}
         try:
-            # data_stream = str(data_stream)
-            print("data_stripper", data_stream)
-            for data in data_stream.split(","):
-                data_type = data.split(":")[0]
-                data_value = data.split(":")[1]
-                sensor_data[data_type] = float(data_value)
+            data = data_stream.split(",")
+            for sensor in data:
+                data_type, data_value = sensor.split(":")
+                data_value = str(data_value)
+                sensor_data[data_type] = data_value
+
         except RuntimeError:
             return False
         return sensor_data
@@ -57,13 +59,15 @@ class WeatherServer:
         
         transmission_start = time.time()
         #while data.decode('utf-8') != "End" and max_wait > sensor_read_time:
-        while max_wait > sensor_read_time:
-            data = connection.recv(2**4)
+        while max_wait > sensor_read_time and data == "":
+            data = connection.recv(2**6)
             data = str(data, encoding='utf-8')
-            if data == "End":
-                break
             sensor_read_time = time.time() - transmission_start
-            self.data_stream_stripper(data)
+        
+        print(f"Sendt in {data} to stripper")
+        sensor_data = self.data_stream_stripper(data)
+
+        print(f"Recieved {sensor_data}")
 
     def connection_handler(self, connection: socket.socket):
         tag = connection.recv(2**4).decode('utf-8')
@@ -73,7 +77,7 @@ class WeatherServer:
         else:
             self._logger.info(f"Connection didn't make valid entry with {tag}, closing connection.")
             connection.close()
-
+    #TODO: Close connections
     def __call__(self):
         self._logger.info("Starting Server")
         self._start_server()
