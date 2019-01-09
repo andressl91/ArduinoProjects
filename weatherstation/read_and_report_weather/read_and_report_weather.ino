@@ -11,8 +11,8 @@
 #include <ESP8266WiFi.h>
 
 
-const char* ssid     = "Zhone403406";
-const char* password = "FdRvWj9xPF";
+const char* ssid     = "MESH";
+const char* password = "internetplease";
 const char* host = "192.168.62.120";
 
 DHT dht(DHTPIN, DHTTYPE);
@@ -39,7 +39,7 @@ void connect_to_wifi() {
 
   // Use WiFiClient class to create TCP connections
   WiFiClient client;
-  const int httpPort = 80;
+  const int httpPort = 10000;
   if (!client.connect(host, httpPort)) {
     Serial.println("connection failed");
     return;
@@ -90,9 +90,9 @@ void setup() {
   Serial.begin(9600);
   Serial.println("DHTxx test!");
   connect_to_wifi();
-  // dht.begin();
+  dht.begin();
 }
 
 void loop() {
-  //read_temp_and_humid();
+  read_temp_and_humid();
 }

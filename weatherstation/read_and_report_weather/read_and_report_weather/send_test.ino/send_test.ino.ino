@@ -11,9 +11,9 @@
 #include <ESP8266WiFi.h>
 
 
-const char* ssid     = "MESH";
-const char* password = "internetplease";
-const char* host = "192.168.62.120";
+const char* ssid     = "Zhone403406";
+const char* password = "FdRvWj9xPF";
+const char* host = "192.168.20.6";
 const int httpPort = 10000;
 
 DHT dht(DHTPIN, DHTTYPE);
@@ -55,7 +55,6 @@ void sop_send() {
   client.print("S1");
   delay(100);
   client.print("Temp: 2");
-  delay(100);
   client.print("Humidity: 10");
   delay(100);
   client.print("End");
