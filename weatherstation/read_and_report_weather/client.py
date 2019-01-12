@@ -1,4 +1,5 @@
 import socket
+import time
 import sys
 
 # Create a TCP/IP socket
@@ -13,18 +14,15 @@ sock.connect(server_address)
 try:
 
     # Send data
-    message = b'This is the message.  It will be repeated.'
-    print(f"sending message {message}")
+    message = b'S1'
     sock.sendall(message)
-
-    # Look for the response
-    amount_received = 0
-    amount_expected = len(message)
-
-    while amount_received < amount_expected:
-        data = sock.recv(16)
-        amount_received += len(data)
-        print(f"received data: {data}")
+    time.sleep(1)
+    mock_sensor_data = b"Temperature: 10, Humidity: 20, Status: 0"
+    sock.sendall(mock_sensor_data)
+    
+    # Recieve data
+    data = sock.recv(2**6)
+    print(f"received data: {data}")
 
 
 finally:

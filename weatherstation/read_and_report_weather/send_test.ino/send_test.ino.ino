@@ -33,10 +33,16 @@ void connect_to_wifi() {
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
 
-  
-  Serial.print("connecting to ");
-  Serial.println(host);
+}
 
+void connect_to_server(){
+  
+  Serial.println("Trying to connect to server");
+  Serial.println(host);
+  if (!client.connect(host, httpPort)) {
+    Serial.println("connection failed");
+    return;
+  }  
 }
 
 void connect_to_socket() {
@@ -117,8 +123,7 @@ void setup() {
   Serial.begin(9600);
   Serial.println("DHTxx test!");
   delay(500);
-  connect_to_wifi();
-  // dht.begin();
+  //2connect_to_wifi();
 }
 
 void loop() {
@@ -126,15 +131,19 @@ void loop() {
   if (WiFi.status() != WL_CONNECTED)
     connect_to_wifi();
 
-  client.connect(host, httpPort);
+  connect_to_server();
   
   delay(500);
   read_temp_and_humid();
-  //sop_send();
+
   String line = client.readStringUntil('\n');
   Serial.println("Recieved from server");
   Serial.println(line);
-  delay(10000);
+  delay(2000);
+
+  if (line == "recieved"){
+    Serial.println("Amazing, it worked");
+  }
 
   client.stop();
   Serial.println("\n[Disconnected]");
