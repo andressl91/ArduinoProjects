@@ -4,7 +4,7 @@ project(socket)
 
 include_directories(include)
 
-set(CMAKE_CXX_FLAGS "-Wall -std=c++0x -Lboost -lpthread -l sqlite3")
+set(CMAKE_CXX_FLAGS "-Wall -std=c++0x -Lboost -lpthread")
 
 file(GLOB SOURCES "src/*.cpp")
 
