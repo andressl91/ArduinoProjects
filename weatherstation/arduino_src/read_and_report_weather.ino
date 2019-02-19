@@ -2,8 +2,8 @@
 #include "stdio.h"
 #define DHTPIN D7     // what digital pin we're connected to
 
-//#define DHTTYPE DHT11   // DHT 11
-#define DHTTYPE DHT22   // DHT 22  (AM2302), AM2321
+#define DHTTYPE DHT11   // DHT 11
+//#define DHTTYPE DHT22   // DHT 22  (AM2302), AM2321
 
 // DHT22 
 // 1. 3.3 V     2. Data to digital input    3. GND     4. Not in use pr. now
@@ -11,9 +11,9 @@
 #include <ESP8266WiFi.h>
 
 
-const char* ssid     = "MESH";
-const char* password = "internetplease";
-const char* host = "192.168.62.120";
+const char* ssid     = "Zhone403406";
+const char* password = "FdRvWj9xPF";
+const char* host = "192.168.20.6";
 
 DHT dht(DHTPIN, DHTTYPE);
 WiFiClient client;
@@ -48,7 +48,8 @@ void connect_to_server(){
     return;
   }
   client.println("S1");
-  client.println("Send this data to server");
+  delay(500);
+  client.println("temperature: 20, status: 0");
   
 }
 

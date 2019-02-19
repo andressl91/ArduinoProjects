@@ -11,14 +11,24 @@ import shyft.api as sa
 from squealer.sql_table_tools import DataTableTools
 from squealer.sqlite_session import SqliteSession
 
-# Set log to show in terminal
-logging.basicConfig(level=logging.INFO)
-
+## Set log to show in terminal
 
 def get_white_list():
     """White list servers"""
     return ["S1"]
 
+def get_logger():
+
+    logger = logging.getLogger()
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter("%(asctime)s;%(levelname)s;%(message)s",
+                              "%Y-%m-%d %H:%M:%S")
+    #formatter = logging.Formatter(
+    #        '%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
+    return logger
 
 class WeatherServer:
     """Simple weatherserver for recieving weatherdata from Arduino"""
@@ -29,11 +39,12 @@ class WeatherServer:
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._whitelist = get_white_list()
         # TODO: IMPLEMENT
-        self._logger = logging.getLogger("ServerMonitor")
+        self._logger = get_logger()
         self._db_connection = SqliteSession(db_path=db_path)
-        self._db_tool = DataTableTools(sql_session=self._db_connection)
+        #self._db_tool = DataTableTools(sql_session=self._db_connection)
+        self._db_tool = DataTableTools(db_path=db_path)
         self._sql_table = None
-        self._table_name = "dht22"
+        self._table_name = "dht11"
         self._nor_cal = sa.Calendar("Europe/Oslo")
 
 
@@ -51,7 +62,7 @@ class WeatherServer:
         if not self._db_tool._does_table_exist(sql_ses=self._db_connection, 
                                                table_name=self._table_name):
             categories = {"time": "REAL", "temperature": "REAL", "humidity":
-                          "REAL", "status": "INTEGER"}
+                          "REAL", "heat_index": "REAL", "status": "INTEGER"}
             self._db_tool.create_table(table_name=self._table_name,
                                        categories=categories)
 
@@ -61,9 +72,9 @@ class WeatherServer:
         self.sock.bind(server_address)
         self.sock.listen(1)
 
-    def write_data_to_sql(self, sensor_data: Dict[str, str]):
+    def store_sensor_data(self, sensor_data: Dict[str, str]):
+        self._logger.info("Persisting sensor data to DB.")
         sensor_data["time"] = self.t_now
-        print(sensor_data)
         self._sql_table.write(sensor_data)
 
     def _stop_server(self):
@@ -85,15 +96,14 @@ class WeatherServer:
                 data_type, data_value = sensor.split(":")
                 data_type = data_type.strip(" ").lower()
                 data_value = str(data_value).strip(" ")
-                sensor_data[data_type] = int(data_value)
+                sensor_data[data_type] = float(data_value)
 
         except RuntimeError:
-            return False
+            return {"status": 1}
+        
         return sensor_data
-    
-    def store_sensor_data(self):
-        pass
 
+        
     def get_sensor_data(self, connection: socket.socket):
         """Recieve sensor TCP/IP message with data"""
         max_wait = 3.0
@@ -101,7 +111,6 @@ class WeatherServer:
         data = ""
         
         transmission_start = time.time()
-        #while data.decode('utf-8') != "End" and max_wait > sensor_read_time:
         while max_wait > sensor_read_time and data == "":
             data = connection.recv(2**6)
             data = str(data, encoding='utf-8')
@@ -109,25 +118,25 @@ class WeatherServer:
         
         self._logger.info((f"Sendt in {data} to stripper"))
         sensor_data = self.data_stream_stripper(data)
-        status = f"""Status {sensor_data["status"]}"""
+        status = f"""status {sensor_data["status"]}"""
 
         if sensor_data["status"] == 0:
-            print(sensor_data)
-            self._logger.info((f"Complete sensor data protocol"))
+            self._logger.info((f"Sensor data protocol complete"))
+            self.store_sensor_data(sensor_data)
 
         else:
             self._logger.info((f"Sensor data disturbed"))
 
-        connection.send(str.encode(status))
-        self.write_data_to_sql(sensor_data)
+        connection.send(str.encode(str(sensor_data["status"])))
+        #connection.send(str.encode(int(sensor_data["status"])))
 
     def connection_handler(self, connection: socket.socket):
         tag = connection.recv(2**4).decode('utf-8')
         if tag in self._whitelist:
-            self._logger.info(f"Connection is in whitelist with tag {tag}")
+            self._logger.info(f"Connection in whitelist, tag {tag}")
             self.get_sensor_data(connection)
         else:
-            self._logger.info(f"Connection didn't make valid entry with {tag}, closing connection.")
+            self._logger.info(f"Connection not in whitelist, tag {tag}")
             connection.close()
     #TODO: Close connections
     def __call__(self):
@@ -141,10 +150,10 @@ class WeatherServer:
 
 
 if __name__ == "__main__":
-    db_path = Path("data/dht22_sensor.db")
-    port = 10000
-    server_address = ('localhost', port)
+    db_path = Path("data/dht11_sensor.db")
+    port = 9999
+    #server_address = ('localhost', port)
     
-    # server_address = ('192.168.62.120', port)
+    server_address = ('192.168.0.4', port)
     sensor_server = WeatherServer(*server_address, db_path)
     sensor_server()

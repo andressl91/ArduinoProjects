@@ -2,8 +2,8 @@
 #include "stdio.h"
 #define DHTPIN D7     // what digital pin we're connected to
 
-//#define DHTTYPE DHT11   // DHT 11
-#define DHTTYPE DHT22   // DHT 22  (AM2302), AM2321
+#define DHTTYPE DHT11   // DHT 11
+//#define DHTTYPE DHT22   // DHT 22  (AM2302), AM2321
 
 // DHT22 
 // 1. 3.3 V     2. Data to digital input    3. GND     4. Not in use pr. now
@@ -11,10 +11,10 @@
 #include <ESP8266WiFi.h>
 
 
-const char* ssid     = "MESH";
-const char* password = "internetplease";
-const char* host = "192.168.62.120";
-const int httpPort = 10000;
+const char* ssid = "Zhone403406";
+const char* password = "FdRvWj9xPF";
+const char* host = "192.168.20.6";
+const int httpPort = 9999;
 
 DHT dht(DHTPIN, DHTTYPE);
 WiFiClient client;
@@ -86,7 +86,7 @@ void sop_send(char *data_series) {
 
   client.print("S1");
   delay(200);
-  //client.print("Temp: 2, Humidity: 10, Status: 0");
+  //client.print("temperature: 2, humidity: 10, status: 0");
   
   client.print(data_series);
   // Make it right
@@ -97,15 +97,15 @@ void format_data(float humidity, float temperature, float heat_index) {
     char hum[40];
     char temp[40];
     char heat_i[40];
-    char stat[10] = "Status: 1"; 
+    char stat[10] = "Status: 0"; 
     char all_data[100];
     
     float fingers = 5.5;
     float toes = 2.2;
     int fin = 1;
-    sprintf(temp, "Temp: %2.1f, ", temperature);
-    sprintf(hum, "Hum: %2.1f ,", humidity);
-    sprintf(heat_i, "Heat_index: %2.1f ,", heat_index);
+    sprintf(temp, "temperature: %2.1f, ", temperature);
+    sprintf(hum, "humidity: %2.1f ,", humidity);
+    sprintf(heat_i, "heat_index: %2.1f ,", heat_index);
     
     all_data[0] = '\0';
     strcat(all_data, temp);
@@ -139,15 +139,20 @@ void loop() {
   String line = client.readStringUntil('\n');
   Serial.println("Recieved from server");
   Serial.println(line);
-  delay(2000);
+  delay(1000);
 
-  if (line == "recieved"){
+  if (line == 0){
     Serial.println("Amazing, it worked");
   }
 
   client.stop();
   Serial.println("\n[Disconnected]");
-
+  delay(900000);
+  // WORKS, must connect PORT D0 to RST
+  // HOWEVER IF D0 is connected at boot to RST, it will not load script
+  //Serial.println("Going into deep sleep for 20 seconds");
+  //ESP.deepSleep(20e6); // e6 for microseconds
+  //ESP.deepSleep(120e6); // 20e6 is 20 microseconds
 
  
 }
