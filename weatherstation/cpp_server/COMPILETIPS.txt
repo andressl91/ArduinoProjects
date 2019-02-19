@@ -1,0 +1,4 @@
+# Set linking options to boost and thread library
+
+g++ socket.cpp -Lboost -lpthread -o socket
+
